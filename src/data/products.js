@@ -1,5 +1,4 @@
-// Change product names, prices, categories, tags and image URLs here.
-// Prices are sample prices in Naira; update them to match current stock.
+// One-time import seed for the admin dashboard; live shop inventory comes from Firestore.
 export const products = [
   {
     id: "ankara-sunrise",

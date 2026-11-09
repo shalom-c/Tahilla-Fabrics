@@ -1,6 +1,4 @@
-const categories = ["All", "Ankara", "Lace", "Brocade", "Premium", "Plain"];
-
-export default function CategoryFilter({ activeCategory, onCategoryChange }) {
+export default function CategoryFilter({ categories, activeCategory, onCategoryChange }) {
   return (
     <div className="category-filter" aria-label="Filter products by category">
       {categories.map((category) => (

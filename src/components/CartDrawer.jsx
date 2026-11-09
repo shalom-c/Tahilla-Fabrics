@@ -2,12 +2,18 @@ import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { WHATSAPP_NUMBER } from "../data/config.js";
 import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { formatPrice } from "./ProductGrid.jsx";
 
 export default function CartDrawer({ isOpen, onClose }) {
   const { items, increase, decrease, remove, total } = useCart();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [deliveryArea, setDeliveryArea] = useState("");
+
+  useEffect(() => {
+    if (user) setName(user.displayName || "");
+  }, [user]);
 
   useEffect(() => {
     if (!isOpen) return undefined;

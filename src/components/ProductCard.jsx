@@ -29,8 +29,8 @@ export default function ProductCard({ product, onAdd }) {
           <strong>{formatPrice(product.price)}</strong>
           <span>{product.unit}</span>
         </div>
-        <button className={`add-button${added ? " added" : ""}`} onClick={handleAdd} aria-label={`Add ${product.name} to cart`}>
-          {added ? <><Check size={17} /> Added ✓</> : <><Plus size={17} /> Add to cart</>}
+        <button className={`add-button${added ? " added" : ""}`} onClick={handleAdd} disabled={product.inStock === false} aria-label={`Add ${product.name} to cart`}>
+          {product.inStock === false ? "Out of stock" : added ? <><Check size={17} /> Added ✓</> : <><Plus size={17} /> Add to cart</>}
         </button>
       </div>
     </article>
