@@ -8,6 +8,15 @@
   place-items: center;
   padding: 24px;
   background: #f8f5ef;
+  transition: opacity 150ms ease-out;
+}
+
+.loader-screen-exit {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .loader-content {

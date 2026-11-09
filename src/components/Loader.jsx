@@ -1,10 +1,10 @@
 import "./Loader.css";
 
-export default function Loader({ size = "lg", label = "Tehilla Fabrics" }) {
+export default function Loader({ size = "lg", label = "Tehilla Fabrics", fadeOut = false }) {
   const isSmall = size === "sm";
 
   return (
-    <div className={`loader ${isSmall ? "loader-small" : "loader-screen"}`} role="status" aria-live="polite">
+    <div className={`loader ${isSmall ? "loader-small" : `loader-screen${fadeOut ? " loader-screen-exit" : ""}`}`} role="status" aria-live="polite">
       <span className="loader-visually-hidden">Loading</span>
       <div className="loader-content" aria-hidden="true">
         <div className="loader-orbit">

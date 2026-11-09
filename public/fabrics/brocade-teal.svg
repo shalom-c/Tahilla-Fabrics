@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+  <defs>
+    <linearGradient id="cloth" x2="1" y2="1"><stop stop-color="#087e7b"/><stop offset=".5" stop-color="#159a91"/><stop offset="1" stop-color="#07535b"/></linearGradient>
+    <linearGradient id="shine" x2="1" y2="1"><stop stop-color="#fff0bd" stop-opacity=".78"/><stop offset=".6" stop-color="#d5aa52" stop-opacity=".28"/><stop offset="1" stop-color="#fff8d8" stop-opacity=".65"/></linearGradient>
+    <pattern id="damask" width="112" height="112" patternUnits="userSpaceOnUse">
+      <path d="M56 3C47 21 33 26 15 21c12 15 8 27-9 35 17 8 21 20 9 35 18-5 32 0 41 18 9-18 23-23 41-18-12-15-8-27 9-35-17-8-21-20-9-35-18 5-32 0-41-18Z" fill="url(#shine)" stroke="#e9ce87" stroke-width="2"/>
+      <path d="M56 24c-5 13-12 18-23 21 11 3 18 9 23 22 5-13 12-19 23-22-11-3-18-8-23-21Z" fill="#09666a" stroke="#f4dc9d" stroke-width="2"/>
+      <circle cx="56" cy="56" r="5" fill="#fff3cf"/><path d="M0 0 15 15m82 82 15 15M112 0 97 15M15 97 0 112" stroke="#efd58f" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="450" fill="url(#cloth)"/><rect width="600" height="450" fill="url(#damask)"/>
+  <path d="M0 94Q160 44 300 114T600 84M0 354Q160 304 300 374T600 344" fill="none" stroke="#e4ffef" stroke-opacity=".16" stroke-width="40"/>
+</svg>

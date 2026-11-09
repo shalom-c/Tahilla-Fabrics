@@ -1,17 +1,19 @@
-import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { db, storage } from "../firebase.js";
-import { products as sampleProducts } from "../data/products.js";
-import { formatPrice } from "../components/ProductGrid.jsx";
+import { getFirebaseFirestore, getFirebaseStorage, isFirebaseConfigured } from "../firebase.js";
+import { sampleProducts } from "../data/sampleProducts.js";
+import formatPrice from "../utils/formatPrice.js";
 import Header from "../components/Header.jsx";
 import CartDrawer from "../components/CartDrawer.jsx";
+import FabricImage from "../components/FabricImage.jsx";
 
 const emptyFabric = { name: "", category: "", price: "", unit: "", tag: "", image: "", inStock: true };
 
 export default function AdminPage() {
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsLoadError, setProductsLoadError] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [tab, setTab] = useState("fabrics");
   const [query, setQuery] = useState("");
@@ -26,27 +28,74 @@ export default function AdminPage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    if (!db) return undefined;
-    return onSnapshot(
-      collection(db, "products"),
-      (snapshot) => setProducts(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))),
-      (error) => {
+    if (!isFirebaseConfigured) {
+      setProductsLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    let unsubscribe;
+    getFirebaseFirestore()
+      .then((database) => {
+        if (cancelled) return;
+        if (!database) {
+          setProductsLoading(false);
+          setProductsLoadError(true);
+          setNotice({ type: "error", text: "Could not load fabrics. Check your Firebase configuration and rules." });
+          return;
+        }
+        unsubscribe = onSnapshot(
+          collection(database, "products"),
+          (snapshot) => {
+            setProducts(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+            setProductsLoading(false);
+            setProductsLoadError(false);
+          },
+          (error) => {
+            console.error("Could not load products for admin.", error);
+            setProductsLoading(false);
+            setProductsLoadError(true);
+            setNotice({ type: "error", text: "Could not load fabrics. Check your Firebase configuration and rules." });
+          },
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
         console.error("Could not load products for admin.", error);
+        setProductsLoading(false);
+        setProductsLoadError(true);
         setNotice({ type: "error", text: "Could not load fabrics. Check your Firebase configuration and rules." });
-      },
-    );
+      });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
-    if (tab !== "customers" || !db) return undefined;
-    return onSnapshot(
-      collection(db, "users"),
-      (snapshot) => setCustomers(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))),
-      (error) => {
+    if (tab !== "customers") return undefined;
+    let cancelled = false;
+    let unsubscribe;
+    getFirebaseFirestore()
+      .then((database) => {
+        if (cancelled || !database) return;
+        unsubscribe = onSnapshot(
+          collection(database, "users"),
+          (snapshot) => setCustomers(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))),
+          (error) => {
+            console.error("Could not load customer records.", error);
+            setNotice({ type: "error", text: "Could not load customers. Check your Firebase rules." });
+          },
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
         console.error("Could not load customer records.", error);
         setNotice({ type: "error", text: "Could not load customers. Check your Firebase rules." });
-      },
-    );
+      });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [tab]);
 
   useEffect(() => {
@@ -106,15 +155,20 @@ export default function AdminPage() {
       showNotice("error", "Enter a name, category, valid non-negative price and unit.");
       return;
     }
-    if (!db || !storage) {
+    if (!isFirebaseConfigured) {
       showNotice("error", "Firebase is not configured. Add your Firebase values to .env.");
       return;
     }
     setBusy(true);
     try {
+      const db = await getFirebaseFirestore();
+      if (!db) throw new Error("Firebase Firestore is not configured.");
       const target = editing?.id ? doc(db, "products", editing.id) : doc(collection(db, "products"));
       let image = form.image;
       if (photo) {
+        const { getDownloadURL, ref, uploadBytes } = await import("firebase/storage");
+        const storage = await getFirebaseStorage();
+        if (!storage) throw new Error("Firebase Storage is not configured.");
         const imageRef = ref(storage, `product-images/${target.id}/${Date.now()}-${photo.name}`);
         await uploadBytes(imageRef, photo, { contentType: photo.type });
         image = await getDownloadURL(imageRef);
@@ -144,6 +198,8 @@ export default function AdminPage() {
   async function removeFabric(product) {
     if (!window.confirm(`Delete “${product.name}”? This cannot be undone.`)) return;
     try {
+      const db = await getFirebaseFirestore();
+      if (!db) throw new Error("Firebase Firestore is not configured.");
       await deleteDoc(doc(db, "products", product.id));
       showNotice("success", "Fabric deleted.");
     } catch (error) {
@@ -155,6 +211,8 @@ export default function AdminPage() {
   async function toggleStock(product) {
     const inStock = product.inStock === false;
     try {
+      const db = await getFirebaseFirestore();
+      if (!db) throw new Error("Firebase Firestore is not configured.");
       await updateDoc(doc(db, "products", product.id), { inStock });
       showNotice("success", `${product.name} marked ${inStock ? "in stock" : "out of stock"}.`);
     } catch (error) {
@@ -170,6 +228,8 @@ export default function AdminPage() {
       return;
     }
     try {
+      const db = await getFirebaseFirestore();
+      if (!db) throw new Error("Firebase Firestore is not configured.");
       await updateDoc(doc(db, "products", product.id), { price, updatedAt: new Date().toISOString() });
       showNotice("success", "Price updated.");
     } catch (error) {
@@ -180,14 +240,17 @@ export default function AdminPage() {
   }
 
   async function importSamples() {
-    if (!db || products.length) return;
+    if (!isFirebaseConfigured || productsLoading || products.length || busy) return;
     setBusy(true);
     try {
+      const db = await getFirebaseFirestore();
+      if (!db) throw new Error("Firebase Firestore is not configured.");
       await Promise.all(sampleProducts.map((product) => setDoc(doc(db, "products", product.id), {
         ...product,
-        inStock: true,
         createdAt: new Date().toISOString(),
       })));
+      const snapshot = await getDocs(collection(db, "products"));
+      setProducts(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
       showNotice("success", `${sampleProducts.length} sample fabrics imported.`);
     } catch (error) {
       console.error("Could not import sample products.", error);
@@ -217,17 +280,25 @@ export default function AdminPage() {
             <label className="admin-category">Category
               <select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select>
             </label>
-            {!products.length && <button className="button button-secondary" onClick={importSamples} disabled={busy}>{busy ? "Importing…" : "Import sample products"}</button>}
           </div>
-          {!products.length ? (
-            <div className="admin-empty"><h2>No fabrics yet</h2><p>Import the 12 sample products or add your first fabric.</p></div>
+          {productsLoading ? (
+            <div className="admin-empty">Loading fabrics…</div>
+          ) : productsLoadError ? (
+            <p className="admin-empty" role="alert">Could not load fabrics. Check your Firebase configuration and rules.</p>
+          ) : !products.length ? (
+            <div className="admin-import-banner">
+              <div><h2>No fabrics yet. Import samples</h2><p>Sample prices are placeholders; update prices and photos in Admin after importing.</p></div>
+              <button className="button button-secondary" onClick={importSamples} disabled={busy || !isFirebaseConfigured}>
+                {busy ? "Importing…" : "Import sample products"}
+              </button>
+            </div>
           ) : (
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price (₦)</th><th>Unit</th><th>In stock</th><th>Actions</th></tr></thead>
                 <tbody>{visibleProducts.map((product) => (
                   <tr key={product.id}>
-                    <td data-label="Photo"><img className="admin-product-image" src={product.image} alt="" /></td>
+                    <td data-label="Photo"><FabricImage className="admin-product-image" src={product.image} alt={`${product.name} fabric`} width={56} height={56} /></td>
                     <td data-label="Name">{product.name}</td>
                     <td data-label="Category">{product.category}</td>
                     <td data-label="Price (₦)" className="quick-price">
@@ -270,7 +341,7 @@ export default function AdminPage() {
               <label className="upload-label">Photo <span className="optional-label">(JPG, PNG or WebP; max 2 MB)</span>
                 <span className="upload-control"><ImagePlus size={18} /> Choose image<input type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} /></span>
               </label>
-              {preview && <img className="image-preview" src={preview} alt="Selected fabric preview" />}
+              {preview && <FabricImage className="image-preview" src={preview} alt="Selected fabric preview" width={640} height={480} />}
               <label className="checkbox-label"><input name="inStock" type="checkbox" checked={Boolean(form.inStock)} onChange={(event) => setForm((current) => ({ ...current, inStock: event.target.checked }))} /> In stock</label>
               <div className="modal-actions"><button type="button" className="button button-secondary" onClick={() => setEditing(null)}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? "Saving…" : "Save fabric"}</button></div>
             </form>

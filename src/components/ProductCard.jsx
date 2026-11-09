@@ -1,6 +1,7 @@
 import { Check, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { formatPrice } from "./ProductGrid.jsx";
+import formatPrice from "../utils/formatPrice.js";
+import FabricImage from "./FabricImage.jsx";
 
 export default function ProductCard({ product, onAdd }) {
   const [added, setAdded] = useState(false);
@@ -19,7 +20,7 @@ export default function ProductCard({ product, onAdd }) {
   return (
     <article className="product-card">
       <div className="product-image-wrap">
-        <img className="product-image" src={product.image} alt={`${product.name} fabric`} loading="lazy" />
+        <FabricImage className="product-image" src={product.image} alt={`${product.name} fabric`} width={600} height={450} />
         {product.tag && <span className="product-tag">{product.tag}</span>}
         <span className="product-category">{product.category}</span>
       </div>
@@ -27,8 +28,9 @@ export default function ProductCard({ product, onAdd }) {
         <h3>{product.name}</h3>
         <div className="product-price">
           <strong>{formatPrice(product.price)}</strong>
-          <span>{product.unit}</span>
+          <span>/ {product.unit}</span>
         </div>
+        {product.description && <p className="product-description">{product.description}</p>}
         <button className={`add-button${added ? " added" : ""}`} onClick={handleAdd} disabled={product.inStock === false} aria-label={`Add ${product.name} to cart`}>
           {product.inStock === false ? "Out of stock" : added ? <><Check size={17} /> Added ✓</> : <><Plus size={17} /> Add to cart</>}
         </button>

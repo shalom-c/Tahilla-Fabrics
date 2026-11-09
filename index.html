@@ -8,10 +8,51 @@
       name="description"
       content="Shop beautiful Ankara, lace, brocade and more at Tehilla Fabrics in Birnin Kebbi. Clear prices, friendly WhatsApp ordering and delivery available."
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
+      rel="stylesheet"
+    />
     <title>Tehilla Fabrics | Beautiful fabrics for every occasion</title>
+    <style>
+      .startup-loader {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        background: #f8f5ef;
+        color: #7b2d3b;
+      }
+      .startup-loader-mark {
+        position: relative;
+        display: grid;
+        width: 72px;
+        height: 72px;
+        place-items: center;
+        font: 500 52px/1 Georgia, serif;
+      }
+      .startup-loader-mark::before {
+        position: absolute;
+        inset: 0;
+        border: 1px solid #c28a2c;
+        border-right-color: transparent;
+        border-radius: 50%;
+        content: "";
+        animation: startup-spin 1.2s linear infinite;
+      }
+      @keyframes startup-spin {
+        to { transform: rotate(360deg); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .startup-loader-mark::before { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="startup-loader" role="status" aria-live="polite" aria-label="Loading Tehilla Fabrics"><span class="startup-loader-mark">T</span></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

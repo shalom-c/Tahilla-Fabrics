@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+  <defs>
+    <linearGradient id="cloth" x2="1" y2="1"><stop stop-color="#f8efd9"/><stop offset="1" stop-color="#e6d5b9"/></linearGradient>
+    <pattern id="lace" width="90" height="90" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#a98b69" stroke-width="1.7" opacity=".85">
+        <path d="M45 3C20 16 20 34 45 45 70 34 70 16 45 3Zm0 42C20 56 20 74 45 87 70 74 70 56 45 45Z"/>
+        <path d="M3 45C16 20 34 20 45 45 34 70 16 70 3 45Zm42 0c13-25 31-25 42 0-11 25-29 25-42 0Z"/>
+        <path d="M11 11 79 79M79 11 11 79" stroke-width="1"/>
+      </g>
+      <g fill="#fffaf0" stroke="#a98b69" stroke-width="1"><circle cx="45" cy="45" r="5"/><circle cx="11" cy="11" r="3"/><circle cx="79" cy="79" r="3"/></g>
+    </pattern>
+  </defs>
+  <rect width="600" height="450" fill="url(#cloth)"/><rect width="600" height="450" fill="url(#lace)"/>
+  <path d="M0 95Q154 54 300 110T600 89M0 355Q154 314 300 370T600 349" fill="none" stroke="#fffdf5" stroke-opacity=".3" stroke-width="28"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+  <defs>
+    <linearGradient id="cloth" x2="1" y2="1"><stop stop-color="#08764b"/><stop offset="1" stop-color="#064733"/></linearGradient>
+    <pattern id="print" width="120" height="120" patternUnits="userSpaceOnUse">
+      <g transform="translate(60 60)">
+        <path d="M0-38C-22-32-24-14 0 0 24-14 22-32 0-38ZM38 0C32-22 14-24 0 0 14 24 32 22 38 0ZM0 38C22 32 24 14 0 0-24 14-22 32 0 38ZM-38 0C-32 22-14 24 0 0-14-24-32-22-38 0Z" fill="#efb841" stroke="#ffe7a0" stroke-width="2"/>
+        <circle r="9" fill="#e74a56"/><circle r="3" fill="#fff2c7"/>
+      </g>
+      <path d="M5 5q18 5 12 23-18-5-12-23Zm110 88q-18-5-12-23 18 5 12 23Z" fill="#9ad06e"/>
+      <path d="M0 0 18 18m84 84 18 18" stroke="#f6e8b8" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="450" fill="url(#cloth)"/><rect width="600" height="450" fill="url(#print)"/>
+  <path d="M0 110Q170 67 310 126T600 94M0 351Q170 308 310 367T600 335" fill="none" stroke="#e4ffe5" stroke-opacity=".13" stroke-width="34"/>
+</svg>

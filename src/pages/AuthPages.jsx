@@ -37,7 +37,7 @@ function AuthLayout({ title, children, footer }) {
 }
 
 export function SignupPage() {
-  const { user, loading, signup } = useAuth();
+  const { user, signup } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +46,6 @@ export function SignupPage() {
   const [busy, setBusy] = useState(false);
   const passwordValidation = validatePassword(form.password);
 
-  if (loading) return <Loader />;
   if (user) return <Navigate to="/shop" replace />;
 
   function update(event) {
@@ -116,7 +115,7 @@ export function SignupPage() {
 }
 
 export function LoginPage() {
-  const { user, role, loading, login, resetPassword } = useAuth();
+  const { user, role, roleLoading, login, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -125,16 +124,15 @@ export function LoginPage() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (loading) return <Loader />;
-  if (user) return <Navigate to={role === "admin" ? "/admin" : "/shop"} replace />;
+  if (user && !roleLoading) return <Navigate to={role === "admin" ? "/admin" : "/shop"} replace />;
 
   async function submit(event) {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      const result = await login(email.trim(), password);
-      navigate(result.role === "admin" ? "/admin" : "/shop", { replace: true });
+      await login(email.trim(), password);
+      navigate("/admin", { replace: true });
     } catch (cause) {
       setError(authMessage(cause));
     } finally {

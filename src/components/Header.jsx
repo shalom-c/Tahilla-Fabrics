@@ -5,7 +5,9 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Header({ onCartOpen }) {
   const { itemCount } = useCart();
-  const { user, role, logout } = useAuth();
+  const { user, role, cachedProfile, logout } = useAuth();
+  const displayName = user?.displayName || cachedProfile?.name || user?.email || "there";
+  const isAdmin = role === "admin" || (!user && cachedProfile?.role === "admin");
 
   return (
     <header className="site-header">
@@ -19,10 +21,10 @@ export default function Header({ onCartOpen }) {
         <Link to="/shop#contact">Contact</Link>
       </nav>
       <div className="header-actions">
-        {user ? (
+        {user || cachedProfile ? (
           <>
-            <span className="header-greeting">Hi, {(user.displayName || user.email || "there").split(" ")[0].split("@")[0]}</span>
-            {role === "admin" && <Link className="header-link" to="/admin">Admin</Link>}
+            <span className="header-greeting">Hi, {displayName.split(" ")[0].split("@")[0]}</span>
+            {isAdmin && <Link className="header-link" to="/admin">Admin</Link>}
             <button className="header-auth-button" onClick={() => logout().catch((error) => console.error("Could not log out.", error))}>Logout</button>
           </>
         ) : (
