@@ -1,13 +1,42 @@
-import { ShoppingBag } from "lucide-react";
+import { Menu, ShoppingBag, X } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
+function AccountLinks({ user, displayName, isAdmin, logout, onNavigate }) {
+  if (user) {
+    return (
+      <>
+        <span className="header-greeting">Hi, {displayName.split(" ")[0].split("@")[0]}</span>
+        {isAdmin && <Link className="header-link" to="/admin" onClick={onNavigate}>Admin</Link>}
+        <button
+          className="header-auth-button"
+          onClick={() => {
+            onNavigate?.();
+            logout().catch((error) => console.error("Could not log out.", error));
+          }}
+        >
+          Logout
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Link className="header-auth-button" to="/login" onClick={onNavigate}>Login</Link>
+      <Link className="button button-primary header-signup" to="/signup" onClick={onNavigate}>Get Started</Link>
+    </>
+  );
+}
+
 export default function Header({ onCartOpen }) {
   const { itemCount } = useCart();
   const { user, role, cachedProfile, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   const displayName = user?.displayName || cachedProfile?.name || user?.email || "there";
-  const isAdmin = role === "admin" || (!user && cachedProfile?.role === "admin");
+  const isAdmin = Boolean(user) && role === "admin";
 
   return (
     <header className="site-header">
@@ -21,24 +50,37 @@ export default function Header({ onCartOpen }) {
         <Link to="/shop#contact">Contact</Link>
       </nav>
       <div className="header-actions">
-        {user || cachedProfile ? (
-          <>
-            <span className="header-greeting">Hi, {displayName.split(" ")[0].split("@")[0]}</span>
-            {isAdmin && <Link className="header-link" to="/admin">Admin</Link>}
-            <button className="header-auth-button" onClick={() => logout().catch((error) => console.error("Could not log out.", error))}>Logout</button>
-          </>
-        ) : (
-          <>
-            <Link className="header-auth-button" to="/login">Login</Link>
-            <Link className="button button-primary header-signup" to="/signup">Get Started</Link>
-          </>
+        <div className="header-account-links">
+          <AccountLinks user={user} displayName={displayName} isAdmin={isAdmin} logout={logout} />
+        </div>
+        {onCartOpen && (
+          <button className="cart-button" onClick={onCartOpen} aria-label={`Open cart, ${itemCount} items`}>
+            <ShoppingBag size={20} aria-hidden="true" />
+            <span className="cart-button-label">Cart</span>
+            <span className="cart-count" aria-live="polite">{itemCount}</span>
+          </button>
         )}
-        <button className="cart-button" onClick={onCartOpen} aria-label={`Open cart, ${itemCount} items`}>
-          <ShoppingBag size={20} aria-hidden="true" />
-          <span className="cart-button-label">Cart</span>
-          <span className="cart-count" aria-live="polite">{itemCount}</span>
+        <button
+          className="mobile-menu-toggle"
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
+        >
+          {menuOpen ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
         </button>
       </div>
+      {menuOpen && (
+        <nav className="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
+          <Link to="/shop#shop" onClick={() => setMenuOpen(false)}>Shop</Link>
+          <Link to="/shop#how-to-order" onClick={() => setMenuOpen(false)}>How to order</Link>
+          <Link to="/shop#contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+          <div className="mobile-menu-account">
+            <AccountLinks user={user} displayName={displayName} isAdmin={isAdmin} logout={logout} onNavigate={() => setMenuOpen(false)} />
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

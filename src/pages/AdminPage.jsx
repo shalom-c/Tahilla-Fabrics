@@ -7,6 +7,7 @@ import formatPrice from "../utils/formatPrice.js";
 import Header from "../components/Header.jsx";
 import CartDrawer from "../components/CartDrawer.jsx";
 import FabricImage from "../components/FabricImage.jsx";
+import NoIndexMeta from "../components/NoIndexMeta.jsx";
 
 const emptyFabric = { name: "", category: "", price: "", unit: "", tag: "", image: "", inStock: true };
 
@@ -262,6 +263,7 @@ export default function AdminPage() {
 
   return (
     <>
+    <NoIndexMeta />
     <Header onCartOpen={() => setIsCartOpen(true)} />
     <main className="admin-page">
       <div className="admin-heading">

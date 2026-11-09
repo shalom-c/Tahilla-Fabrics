@@ -889,6 +889,24 @@ h2 {
   font-size: 10px;
 }
 
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.footer-nav a:hover {
+  color: var(--burgundy);
+}
+
+.footer-nav .staff-login-link {
+  font-size: 9px;
+  opacity: 0.8;
+}
+
 .whatsapp-float {
   position: fixed;
   z-index: 15;
@@ -1150,8 +1168,9 @@ h2 {
     height: 78px;
   }
 
-  .main-nav {
-    display: flex;
+  .welcome-page,
+  .auth-page {
+    min-height: calc(100dvh - 78px);
   }
 
   .hero {
@@ -1347,6 +1366,12 @@ h2 {
   gap: 9px;
 }
 
+.header-account-links {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .header-auth-button,
 .header-link {
   border: 0;
@@ -1371,11 +1396,53 @@ h2 {
   font-size: 11px;
 }
 
+.mobile-menu-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--burgundy);
+  cursor: pointer;
+}
+
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px 6%;
+  border-bottom: 1px solid var(--line);
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mobile-menu-account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.mobile-menu-account .header-account-links {
+  display: flex;
+}
+
 .welcome-page,
 .auth-page {
   position: relative;
   display: grid;
-  min-height: 100dvh;
+  min-height: calc(100dvh - 72px);
   place-items: center;
   overflow: hidden;
   padding: 28px 20px 94px;
@@ -2168,6 +2235,11 @@ h2 {
     display: none;
   }
 
+  .mobile-menu-account .header-greeting,
+  .mobile-menu-account .header-link {
+    display: inline;
+  }
+
   .cart-button {
     min-height: 38px;
   }
@@ -2188,5 +2260,31 @@ h2 {
 
   .admin-category {
     justify-content: space-between;
+  }
+}
+
+@media (min-width: 800px) {
+  .main-nav,
+  .header-account-links {
+    display: flex;
+  }
+
+  .header-account-links .header-greeting {
+    display: inline;
+  }
+}
+
+@media (max-width: 799px) {
+  .main-nav,
+  .header-actions > .header-account-links {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: grid;
+  }
+
+  .mobile-menu-account .header-greeting {
+    display: inline;
   }
 }

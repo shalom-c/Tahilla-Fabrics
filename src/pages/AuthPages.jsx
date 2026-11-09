@@ -1,8 +1,11 @@
 import { Check, Eye, EyeOff, X } from "lucide-react";
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import Header from "../components/Header.jsx";
 import Loader from "../components/Loader.jsx";
+import NoIndexMeta from "../components/NoIndexMeta.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { getFirebaseFirestore } from "../firebase.js";
 import validatePassword from "../utils/validatePassword.js";
 
 function authMessage(error) {
@@ -21,18 +24,21 @@ function authMessage(error) {
 
 function AuthLayout({ title, children, footer }) {
   return (
-    <main className="auth-page">
-      <section className="auth-card" aria-labelledby="auth-title">
-        <Link className="brand auth-brand" to="/">
-          <span className="brand-mark" aria-hidden="true">T</span>
-          <span className="brand-name">Tehilla <span>Fabrics</span></span>
-        </Link>
-        <span className="eyebrow"><span className="eyebrow-line" /> Your fabric journey starts here</span>
-        <h1 id="auth-title">{title}</h1>
-        {children}
-        <p className="auth-footer">{footer}</p>
-      </section>
-    </main>
+    <>
+      <Header />
+      <main className="auth-page">
+        <section className="auth-card" aria-labelledby="auth-title">
+          <Link className="brand auth-brand" to="/">
+            <span className="brand-mark" aria-hidden="true">T</span>
+            <span className="brand-name">Tehilla <span>Fabrics</span></span>
+          </Link>
+          <span className="eyebrow"><span className="eyebrow-line" /> Your fabric journey starts here</span>
+          <h1 id="auth-title">{title}</h1>
+          {children}
+          <p className="auth-footer">{footer}</p>
+        </section>
+      </main>
+    </>
   );
 }
 
@@ -171,5 +177,106 @@ export function LoginPage() {
         <button className="button button-primary auth-submit" disabled={busy}>{busy ? <><Loader size="sm" /> Logging in…</> : "Login"}</button>
       </form>
     </AuthLayout>
+  );
+}
+
+export function AdminLoginPage() {
+  const { user, role, roleLoading, login, logout, resetPassword } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+
+  if (user && !roleLoading && role === "admin") return <Navigate to="/admin" replace />;
+
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setNotice("");
+
+    let signedInUser;
+    try {
+      ({ user: signedInUser } = await login(email.trim(), password));
+    } catch (cause) {
+      setError(authMessage(cause));
+      setBusy(false);
+      return;
+    }
+
+    try {
+      const database = await getFirebaseFirestore();
+      if (!database) throw new Error("Firebase Firestore is not configured.");
+      const { doc, getDoc } = await import("firebase/firestore");
+      const profile = await getDoc(doc(database, "users", signedInUser.uid));
+      if (profile.exists() && profile.data().role === "admin") {
+        navigate("/admin", { replace: true });
+        return;
+      }
+
+      try {
+        await logout();
+      } catch (cause) {
+        console.error("Could not sign out an account without admin access.", cause);
+      }
+      setError("This account does not have admin access.");
+    } catch (cause) {
+      console.error("Could not verify the staff user's Firestore role.", cause);
+      try {
+        await logout();
+      } catch (signOutError) {
+        console.error("Could not sign out after staff access verification failed.", signOutError);
+      }
+      setError("We couldn’t verify staff access. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function forgotPassword() {
+    if (!email.trim()) {
+      setError("Enter your email address first, then choose Forgot password.");
+      return;
+    }
+    setError("");
+    setNotice("");
+    setResetBusy(true);
+    try {
+      await resetPassword(email.trim());
+      setNotice("If an account exists for that email, a password reset link is on its way.");
+    } catch (cause) {
+      setError(authMessage(cause));
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <NoIndexMeta />
+      <AuthLayout title="Staff login" footer={<>Customer? <Link to="/login">Login here</Link></>}>
+        <form className="account-form" onSubmit={submit}>
+          <label>Email address<input type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} autoComplete="email" required /></label>
+          <label>Password
+            <span className="password-input">
+              <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => { setPassword(event.target.value); setError(""); }} autoComplete="current-password" required />
+              <button type="button" className="password-toggle" onClick={() => setShowPassword((shown) => !shown)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+            </span>
+          </label>
+          <button className="forgot-link" type="button" onClick={forgotPassword} disabled={resetBusy}>
+            {resetBusy ? <><Loader size="sm" /> Sending…</> : "Forgot password?"}
+          </button>
+          {error && <p className="form-status error" role="alert">{error}</p>}
+          {notice && <p className="form-status success" role="status">{notice}</p>}
+          <button className="button button-primary auth-submit" disabled={busy}>
+            {busy ? <><Loader size="sm" /> Checking access…</> : "Login"}
+          </button>
+        </form>
+      </AuthLayout>
+    </>
   );
 }
