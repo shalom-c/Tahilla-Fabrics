@@ -6,6 +6,7 @@ import Loader from "../components/Loader.jsx";
 import NoIndexMeta from "../components/NoIndexMeta.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getFirebaseFirestore } from "../firebase.js";
+import validateNigerianPhone from "../utils/validateNigerianPhone.js";
 import validatePassword from "../utils/validatePassword.js";
 
 function authMessage(error) {
@@ -50,17 +51,26 @@ export function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const passwordValidation = validatePassword(form.password);
+  const phoneValidation = validateNigerianPhone(form.phone);
+  const phoneError = phoneTouched && !phoneValidation.valid ? phoneValidation.error : "";
 
   if (user) return <Navigate to="/shop" replace />;
 
   function update(event) {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+    const value = event.target.name === "phone"
+      ? event.target.value.replace(/[^\d+\s-]/g, "").slice(0, 17)
+      : event.target.value;
+    setForm((current) => ({ ...current, [event.target.name]: value }));
+    if (event.target.name === "phone") setPhoneTouched(true);
     setError("");
   }
 
   async function submit(event) {
     event.preventDefault();
+    setPhoneTouched(true);
+    if (!phoneValidation.valid) return;
     if (!passwordValidation.valid) {
       return setError("Password must be 8 to 16 characters and include an uppercase letter, a lowercase letter, a number and a symbol.");
     }
@@ -70,7 +80,7 @@ export function SignupPage() {
       await signup({
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim(),
+        phone: phoneValidation.normalized,
         password: form.password,
       });
       navigate("/shop", { replace: true });
@@ -86,7 +96,24 @@ export function SignupPage() {
       <form className="account-form" onSubmit={submit}>
         <label>Full name<input name="name" value={form.name} onChange={update} autoComplete="name" required /></label>
         <label>Email address<input name="email" type="email" value={form.email} onChange={update} autoComplete="email" required /></label>
-        <label>Phone number<input name="phone" type="tel" value={form.phone} onChange={update} autoComplete="tel" required /></label>
+        <label>
+          Phone number
+          <input
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            value={form.phone}
+            onChange={update}
+            onBlur={() => setPhoneTouched(true)}
+            autoComplete="tel"
+            placeholder="0812 042 2386"
+            maxLength={17}
+            aria-invalid={Boolean(phoneError)}
+            aria-describedby={phoneError ? "signup-phone-error" : undefined}
+            required
+          />
+          {phoneError && <span className="field-error" id="signup-phone-error">{phoneError}</span>}
+        </label>
         <label>Password
           <span className="password-input">
             <input name="password" type={showPassword ? "text" : "password"} value={form.password} onChange={update} autoComplete="new-password" maxLength={16} required />

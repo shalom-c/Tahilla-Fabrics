@@ -857,6 +857,12 @@ h2 {
   color: var(--burgundy);
 }
 
+.field-error {
+  color: var(--burgundy);
+  font-size: 11px;
+  font-weight: 400;
+}
+
 .site-footer {
   display: flex;
   flex-wrap: wrap;

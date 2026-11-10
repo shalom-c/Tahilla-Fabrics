@@ -15,6 +15,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, getFirebaseFirestore, isFirebaseConfigured } from "../firebase.js";
+import validateNigerianPhone from "../utils/validateNigerianPhone.js";
 
 const AuthContext = createContext(null);
 const PROFILE_CACHE_KEY = "tehilla-auth-profile";
@@ -166,6 +167,8 @@ export function AuthProvider({ children }) {
 
   const signup = useCallback(async ({ name, email, phone, password }) => {
     if (!auth) throw new Error("Firebase is not configured. Add your Firebase values to .env.");
+    const phoneValidation = validateNigerianPhone(phone);
+    if (!phoneValidation.valid) throw new Error(phoneValidation.error);
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: name });
     const [database, { doc, setDoc }] = await Promise.all([
@@ -177,7 +180,7 @@ export function AuthProvider({ children }) {
       uid: result.user.uid,
       name,
       email,
-      phone,
+      phone: phoneValidation.normalized,
       role: "customer",
       createdAt: new Date().toISOString(),
     });

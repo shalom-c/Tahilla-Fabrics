@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FORM_ENDPOINT, SHOP_EMAIL } from "../data/config.js";
+import validateNigerianPhone from "../utils/validateNigerianPhone.js";
 
 const initialForm = { name: "", email: "", phone: "", message: "" };
 
@@ -7,9 +8,18 @@ export default function MessageForm() {
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSending, setIsSending] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const phoneValidation = validateNigerianPhone(form.phone);
+  const phoneError = form.phone.trim() && phoneTouched && !phoneValidation.valid
+    ? phoneValidation.error
+    : "";
 
   function updateField(event) {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+    const value = event.target.name === "phone"
+      ? event.target.value.replace(/[^\d+\s-]/g, "").slice(0, 17)
+      : event.target.value;
+    setForm((current) => ({ ...current, [event.target.name]: value }));
+    if (event.target.name === "phone") setPhoneTouched(true);
     setStatus({ type: "", message: "" });
   }
 
@@ -17,6 +27,8 @@ export default function MessageForm() {
     event.preventDefault();
     setStatus({ type: "", message: "" });
 
+    setPhoneTouched(true);
+    if (form.phone.trim() && !phoneValidation.valid) return;
     if (!event.currentTarget.reportValidity()) return;
 
     if (!FORM_ENDPOINT) {
@@ -24,7 +36,7 @@ export default function MessageForm() {
       const body = [
         `Name: ${form.name.trim()}`,
         `Email: ${form.email.trim()}`,
-        `Phone: ${form.phone.trim() || "Not provided"}`,
+        `Phone: ${form.phone.trim() ? phoneValidation.normalized : "Not provided"}`,
         "",
         form.message.trim(),
       ].join("\n");
@@ -41,7 +53,7 @@ export default function MessageForm() {
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
-          phone: form.phone.trim(),
+          phone: form.phone.trim() ? phoneValidation.normalized : "",
           message: form.message.trim(),
         }),
       });
@@ -77,7 +89,20 @@ export default function MessageForm() {
           </div>
           <label>
             Phone number <span className="optional-label">(optional)</span>
-            <input name="phone" type="tel" value={form.phone} onChange={updateField} autoComplete="tel" />
+            <input
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              value={form.phone}
+              onChange={updateField}
+              onBlur={() => setPhoneTouched(true)}
+              autoComplete="tel"
+              placeholder="0812 042 2386"
+              maxLength={17}
+              aria-invalid={Boolean(phoneError)}
+              aria-describedby={phoneError ? "message-phone-error" : undefined}
+            />
+            {phoneError && <span className="field-error" id="message-phone-error">{phoneError}</span>}
           </label>
           <label>
             Your message
