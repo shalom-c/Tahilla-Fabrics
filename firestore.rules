@@ -5,6 +5,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
     function isAdmin() {
       return signedIn()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
@@ -16,15 +20,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if (signedIn() && request.auth.uid == userId) || isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if signedIn()
-        && request.auth.uid == userId
+      allow create: if isOwner(userId)
         && request.resource.data.uid == userId
         && request.resource.data.role == "customer"
         && request.resource.data.keys().hasOnly(["uid", "name", "email", "phone", "role", "createdAt"]);
-      allow update: if signedIn()
-        && request.auth.uid == userId
+      allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.role == resource.data.role
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "email", "phone"]);

@@ -857,6 +857,59 @@ h2 {
   color: var(--burgundy);
 }
 
+.verification-panel {
+  display: grid;
+  gap: 14px;
+  color: var(--muted);
+}
+
+.verification-panel > p {
+  margin: 0;
+}
+
+.verification-panel strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.verification-reminder,
+.admin-verification-reminder {
+  padding: 10px 13px;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
+  background: color-mix(in srgb, var(--gold) 10%, var(--surface));
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.verification-change-email {
+  justify-self: center;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--burgundy);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checkout-access {
+  display: grid;
+  gap: 12px;
+  padding-top: 17px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.checkout-access > p {
+  margin: 0;
+}
+
+.checkout-access-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .field-error {
   color: var(--burgundy);
   font-size: 11px;
@@ -1796,6 +1849,10 @@ h2 {
   min-height: calc(100dvh - 78px);
   margin: 0 auto;
   padding: 40px 0 70px;
+}
+
+.admin-verification-reminder {
+  margin: -10px 0 20px;
 }
 
 .admin-heading,

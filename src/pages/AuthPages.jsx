@@ -1,5 +1,5 @@
 import { Check, Eye, EyeOff, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import Loader from "../components/Loader.jsx";
@@ -17,7 +17,7 @@ function authMessage(error) {
     "auth/invalid-credential": "The email or password is incorrect.",
     "auth/email-already-in-use": "An account already exists with this email. Try logging in.",
     "auth/weak-password": "Password must be 8 to 16 characters and include an uppercase letter, a lowercase letter, a number and a symbol.",
-    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+    "auth/too-many-requests": "Please wait a few minutes before trying again.",
     "auth/network-request-failed": "Network issue. Check your connection and try again.",
   };
   return messages[error.code] || error.message || "Something went wrong. Please try again.";
@@ -56,7 +56,7 @@ export function SignupPage() {
   const phoneValidation = validateNigerianPhone(form.phone);
   const phoneError = phoneTouched && !phoneValidation.valid ? phoneValidation.error : "";
 
-  if (user) return <Navigate to="/shop" replace />;
+  if (user) return <Navigate to={user.emailVerified ? "/shop" : "/verify-email"} replace />;
 
   function update(event) {
     const value = event.target.name === "phone"
@@ -83,7 +83,7 @@ export function SignupPage() {
         phone: phoneValidation.normalized,
         password: form.password,
       });
-      navigate("/shop", { replace: true });
+      navigate("/verify-email", { replace: true });
     } catch (cause) {
       setError(authMessage(cause));
     } finally {
@@ -157,15 +157,17 @@ export function LoginPage() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (user && !roleLoading) return <Navigate to={role === "admin" ? "/admin" : "/shop"} replace />;
+  if (user && !roleLoading) {
+    return <Navigate to={role === "admin" ? "/admin" : user.emailVerified ? "/shop" : "/verify-email"} replace />;
+  }
 
   async function submit(event) {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      await login(email.trim(), password);
-      navigate("/admin", { replace: true });
+      const { user: signedInUser } = await login(email.trim(), password);
+      navigate(signedInUser.emailVerified ? "/admin" : "/verify-email", { replace: true });
     } catch (cause) {
       setError(authMessage(cause));
     } finally {
@@ -203,6 +205,91 @@ export function LoginPage() {
         {notice && <p className="form-status success" role="status">{notice}</p>}
         <button className="button button-primary auth-submit" disabled={busy}>{busy ? <><Loader size="sm" /> Logging in…</> : "Login"}</button>
       </form>
+    </AuthLayout>
+  );
+}
+
+export function VerifyEmailPage() {
+  const { user, role, loading, roleLoading, logout, refreshUser, sendVerificationEmail } = useAuth();
+  const navigate = useNavigate();
+  const [cooldown, setCooldown] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const checkVerification = useCallback(async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const refreshedUser = await refreshUser();
+      if (refreshedUser?.emailVerified) navigate("/shop", { replace: true });
+      else if (!refreshedUser) navigate("/login", { replace: true });
+    } catch (cause) {
+      setError(authMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }, [navigate, refreshUser]);
+
+  useEffect(() => {
+    if (!user || user.emailVerified) return undefined;
+    const interval = window.setInterval(checkVerification, 5000);
+    return () => window.clearInterval(interval);
+  }, [checkVerification, user?.uid, user?.emailVerified]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const timeout = window.setTimeout(() => setCooldown((remaining) => remaining - 1), 1000);
+    return () => window.clearTimeout(timeout);
+  }, [cooldown]);
+
+  if (loading || (user && roleLoading)) return <Loader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.emailVerified) return <Navigate to={role === "admin" ? "/admin" : "/shop"} replace />;
+
+  async function resendEmail() {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await sendVerificationEmail(user);
+      setCooldown(60);
+      setNotice("Email sent again.");
+    } catch (cause) {
+      setError(authMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function useDifferentEmail() {
+    setBusy(true);
+    setError("");
+    try {
+      await logout();
+      navigate("/signup", { replace: true });
+    } catch (cause) {
+      setError(authMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AuthLayout title="Verify your email" footer={<>Need help? <Link to="/login">Return to login</Link></>}>
+      <div className="verification-panel">
+        <p className="verification-reminder" role="status">Please verify your email to continue.</p>
+        <p>We sent a verification link to <strong>{user.email}</strong>. Open your email and tap the link. Check your spam folder too.</p>
+        {error && <p className="form-status error" role="alert">{error}</p>}
+        {notice && <p className="form-status success" role="status">{notice}</p>}
+        <button className="button button-primary auth-submit" onClick={checkVerification} disabled={busy}>
+          {busy ? <><Loader size="sm" /> Checking…</> : "I have verified, continue"}
+        </button>
+        <button className="button button-secondary auth-submit" onClick={resendEmail} disabled={busy || cooldown > 0}>
+          {cooldown > 0 ? `Resend email in ${cooldown}s` : "Resend email"}
+        </button>
+        <button className="verification-change-email" onClick={useDifferentEmail} disabled={busy}>Use a different email</button>
+      </div>
     </AuthLayout>
   );
 }

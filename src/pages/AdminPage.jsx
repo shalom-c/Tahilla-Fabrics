@@ -8,10 +8,12 @@ import Header from "../components/Header.jsx";
 import CartDrawer from "../components/CartDrawer.jsx";
 import FabricImage from "../components/FabricImage.jsx";
 import NoIndexMeta from "../components/NoIndexMeta.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const emptyFabric = { name: "", category: "", price: "", unit: "", tag: "", image: "", inStock: true };
 
 export default function AdminPage() {
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsLoadError, setProductsLoadError] = useState(false);
@@ -270,6 +272,9 @@ export default function AdminPage() {
         <div><span className="eyebrow"><span className="eyebrow-line" /> Store management</span><h1>Admin dashboard</h1></div>
         <button className="button button-primary" onClick={() => openEditor()}><Plus size={17} /> Add new fabric</button>
       </div>
+      {user && !user.emailVerified && (
+        <p className="admin-verification-reminder" role="status">A reminder: please verify your email to help keep your account secure.</p>
+      )}
       {notice && <p className={`admin-toast ${notice.type}`} role="status">{notice.text}</p>}
       <div className="admin-tabs" role="tablist" aria-label="Dashboard sections">
         <button role="tab" aria-selected={tab === "fabrics"} className={tab === "fabrics" ? "active" : ""} onClick={() => setTab("fabrics")}>Fabrics ({products.length})</button>

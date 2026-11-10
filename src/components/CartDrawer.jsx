@@ -1,5 +1,6 @@
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { WHATSAPP_NUMBER } from "../data/config.js";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -9,6 +10,7 @@ import FabricImage from "./FabricImage.jsx";
 export default function CartDrawer({ isOpen, onClose }) {
   const { items, increase, decrease, remove, total } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [deliveryArea, setDeliveryArea] = useState("");
 
@@ -33,6 +35,16 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   function sendOrder(event) {
     event.preventDefault();
+    if (!user) {
+      onClose();
+      navigate("/login");
+      return;
+    }
+    if (!user.emailVerified) {
+      onClose();
+      navigate("/verify-email");
+      return;
+    }
     const lines = items.map(
       (item) =>
         `• ${item.name} (${item.unit}) x${item.quantity} — ${formatPrice(item.price * item.quantity)}`,
@@ -92,19 +104,33 @@ export default function CartDrawer({ isOpen, onClose }) {
                 </article>
               ))}
             </div>
-            <form className="order-form" onSubmit={sendOrder}>
-              <label>
-                Your name
-                <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />
-              </label>
-              <label>
-                Delivery area or “Pickup”
-                <input value={deliveryArea} onChange={(event) => setDeliveryArea(event.target.value)} required />
-              </label>
-              <div className="cart-total"><span>Order total</span><strong>{formatPrice(total)}</strong></div>
-              <p className="checkout-note">We’ll confirm fabric availability and delivery details with you on WhatsApp.</p>
-              <button className="button button-primary checkout-button" type="submit">Send order on WhatsApp</button>
-            </form>
+            {user?.emailVerified ? (
+              <form className="order-form" onSubmit={sendOrder}>
+                <label>
+                  Your name
+                  <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />
+                </label>
+                <label>
+                  Delivery area or “Pickup”
+                  <input value={deliveryArea} onChange={(event) => setDeliveryArea(event.target.value)} required />
+                </label>
+                <div className="cart-total"><span>Order total</span><strong>{formatPrice(total)}</strong></div>
+                <p className="checkout-note">We’ll confirm fabric availability and delivery details with you on WhatsApp.</p>
+                <button className="button button-primary checkout-button" type="submit">Send order on WhatsApp</button>
+              </form>
+            ) : (
+              <div className="checkout-access">
+                <p>{user ? "Please verify your email before checking out." : "Please sign in or create an account to check out."}</p>
+                {user ? (
+                  <Link className="button button-primary checkout-button" to="/verify-email" onClick={onClose}>Verify email</Link>
+                ) : (
+                  <div className="checkout-access-actions">
+                    <Link className="button button-primary" to="/login" onClick={onClose}>Log in</Link>
+                    <Link className="button button-secondary" to="/signup" onClick={onClose}>Create account</Link>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </aside>

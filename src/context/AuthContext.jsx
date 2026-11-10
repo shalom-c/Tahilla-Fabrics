@@ -10,6 +10,7 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -165,6 +166,14 @@ export function AuthProvider({ children }) {
     return { user: result.user };
   }, []);
 
+  const sendVerificationEmail = useCallback(async (targetUser) => {
+    if (!targetUser) throw new Error("Please sign in again before requesting a verification email.");
+    await sendEmailVerification(targetUser, {
+      url: `${window.location.origin}/login`,
+      handleCodeInApp: false,
+    });
+  }, []);
+
   const signup = useCallback(async ({ name, email, phone, password }) => {
     if (!auth) throw new Error("Firebase is not configured. Add your Firebase values to .env.");
     const phoneValidation = validateNigerianPhone(phone);
@@ -184,6 +193,7 @@ export function AuthProvider({ children }) {
       role: "customer",
       createdAt: new Date().toISOString(),
     });
+    await sendVerificationEmail(result.user);
     setUser(result.user);
     setRole("customer");
     setCachedProfile({ uid: result.user.uid, name, role: "customer" });
@@ -191,7 +201,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
     setRoleLoading(false);
     return result.user;
-  }, []);
+  }, [sendVerificationEmail]);
 
   const logout = useCallback(async () => {
     if (!auth) return;
@@ -203,9 +213,44 @@ export function AuthProvider({ children }) {
     await sendPasswordResetEmail(auth, email);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    if (!auth?.currentUser) {
+      setUser(null);
+      return null;
+    }
+    await auth.currentUser.reload();
+    const refreshedUser = auth.currentUser;
+    setUser(refreshedUser);
+    return refreshedUser;
+  }, []);
+
   const value = useMemo(
-    () => ({ user, role, cachedProfile, loading, roleLoading, login, signup, logout, resetPassword }),
-    [user, role, cachedProfile, loading, roleLoading, login, signup, logout, resetPassword],
+    () => ({
+      user,
+      role,
+      cachedProfile,
+      loading,
+      roleLoading,
+      login,
+      signup,
+      logout,
+      resetPassword,
+      sendVerificationEmail,
+      refreshUser,
+    }),
+    [
+      user,
+      role,
+      cachedProfile,
+      loading,
+      roleLoading,
+      login,
+      signup,
+      logout,
+      resetPassword,
+      sendVerificationEmail,
+      refreshUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

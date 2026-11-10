@@ -12,6 +12,9 @@ const LoginPage = lazy(() =>
 const SignupPage = lazy(() =>
   import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.SignupPage })),
 );
+const VerifyEmailPage = lazy(() =>
+  import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.VerifyEmailPage })),
+);
 const AdminLoginPage = lazy(() =>
   import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.AdminLoginPage })),
 );
@@ -24,6 +27,7 @@ export default function App() {
           <Route path="/" element={<WelcomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route element={<ProtectedRoute />}>
