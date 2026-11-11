@@ -857,41 +857,6 @@ h2 {
   color: var(--burgundy);
 }
 
-.verification-panel {
-  display: grid;
-  gap: 14px;
-  color: var(--muted);
-}
-
-.verification-panel > p {
-  margin: 0;
-}
-
-.verification-panel strong {
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.verification-reminder,
-.admin-verification-reminder {
-  padding: 10px 13px;
-  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
-  background: color-mix(in srgb, var(--gold) 10%, var(--surface));
-  color: var(--ink);
-  font-size: 12px;
-}
-
-.verification-change-email {
-  justify-self: center;
-  padding: 6px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--burgundy);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .checkout-access {
   display: grid;
   gap: 12px;
@@ -1851,10 +1816,6 @@ h2 {
   padding: 40px 0 70px;
 }
 
-.admin-verification-reminder {
-  margin: -10px 0 20px;
-}
-
 .admin-heading,
 .admin-toolbar,
 .modal-heading {
@@ -2349,5 +2310,229 @@ h2 {
 
   .mobile-menu-account .header-greeting {
     display: inline;
+  }
+}
+
+.route-transition {
+  min-height: 100dvh;
+  animation: route-fade 260ms ease-out both;
+}
+
+.route-transition > main > :not(.modal-backdrop):not(.admin-toast) {
+  animation: route-enter 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.route-loading {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+}
+
+button,
+a[href],
+input,
+textarea,
+select {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.button:not(:disabled):hover,
+.cart-button:hover,
+.icon-button:hover,
+.mobile-menu-toggle:hover,
+.filter-button:hover,
+.add-button:not(:disabled):hover,
+.stock-toggle:hover {
+  box-shadow: 0 5px 14px rgb(52 34 27 / 12%);
+  transform: translateY(-2px) scale(1.015);
+}
+
+a[href]:hover {
+  color: var(--burgundy);
+}
+
+.password-toggle:not(:disabled):hover {
+  transform: translateY(-50%) scale(1.04);
+}
+
+button:not(:disabled):active,
+a[href]:active {
+  transform: scale(0.98);
+}
+
+.password-toggle:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: color-mix(in srgb, var(--burgundy) 45%, var(--line));
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--burgundy);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--burgundy) 12%, transparent);
+}
+
+.search-field input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.product-card,
+.step-card,
+.trust-item,
+.contact-icon,
+.admin-table tbody tr,
+.auth-card,
+.welcome-card {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.product-card:hover,
+.auth-card:hover,
+.welcome-card:hover {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
+  box-shadow: 0 14px 35px rgb(52 34 27 / 10%);
+  transform: translateY(-3px);
+}
+
+.step-card:hover {
+  transform: translateY(-3px);
+}
+
+.trust-item:hover {
+  transform: translateY(-2px);
+}
+
+.contact-row:hover .contact-icon {
+  background: color-mix(in srgb, var(--burgundy) 8%, var(--surface));
+  transform: scale(1.06);
+}
+
+.admin-table tbody tr {
+  animation: row-enter 220ms ease both;
+}
+
+.admin-table tbody tr:hover {
+  background: color-mix(in srgb, var(--burgundy) 4%, var(--surface));
+}
+
+.mobile-menu {
+  transform-origin: top;
+  animation: dropdown-enter 180ms ease-out both;
+}
+
+.mobile-menu.is-closing {
+  animation: dropdown-exit 160ms ease-in both;
+}
+
+.admin-toast,
+.form-status {
+  animation: feedback-enter 220ms ease-out both;
+}
+
+.admin-toast.is-closing {
+  animation: feedback-exit 180ms ease-in both;
+}
+
+.modal-backdrop {
+  animation: fade-in 180ms ease-out both;
+}
+
+.fabric-modal {
+  animation: modal-enter 220ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.modal-backdrop.is-closing {
+  animation: fade-out 180ms ease-in both;
+}
+
+.fabric-modal.is-closing {
+  animation: modal-exit 180ms ease-in both;
+}
+
+.drawer-overlay.is-closing {
+  animation: fade-out 200ms ease-in both;
+}
+
+.cart-drawer.is-closing {
+  animation: slide-out 200ms ease-in both;
+}
+
+@keyframes route-enter {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes route-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dropdown-enter {
+  from { opacity: 0; transform: translateY(-7px) scaleY(0.98); }
+  to { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+@keyframes dropdown-exit {
+  to { opacity: 0; transform: translateY(-7px) scaleY(0.98); }
+}
+
+@keyframes feedback-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes feedback-exit {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes row-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modal-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes modal-exit {
+  to { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes slide-out {
+  to { opacity: 0; transform: translateX(30px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-transition,
+  .admin-table tbody tr,
+  .admin-toast,
+  .form-status,
+  .mobile-menu,
+  .fabric-modal,
+  .modal-backdrop,
+  .drawer-overlay,
+  .cart-drawer {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

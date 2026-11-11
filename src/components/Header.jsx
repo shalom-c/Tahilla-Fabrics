@@ -1,5 +1,5 @@
 import { Menu, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -35,8 +35,31 @@ export default function Header({ onCartOpen }) {
   const { itemCount } = useCart();
   const { user, role, cachedProfile, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const displayName = user?.displayName || cachedProfile?.name || user?.email || "there";
   const isAdmin = Boolean(user) && role === "admin";
+
+  useEffect(() => {
+    if (!menuClosing) return undefined;
+    const timeout = window.setTimeout(() => {
+      setMenuOpen(false);
+      setMenuClosing(false);
+    }, 160);
+    return () => window.clearTimeout(timeout);
+  }, [menuClosing]);
+
+  function closeMenu() {
+    if (menuOpen && !menuClosing) setMenuClosing(true);
+  }
+
+  function toggleMenu() {
+    if (menuOpen && !menuClosing) {
+      setMenuClosing(true);
+      return;
+    }
+    setMenuClosing(false);
+    setMenuOpen(true);
+  }
 
   return (
     <header className="site-header">
@@ -63,7 +86,7 @@ export default function Header({ onCartOpen }) {
         <button
           className="mobile-menu-toggle"
           type="button"
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={toggleMenu}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
@@ -72,12 +95,12 @@ export default function Header({ onCartOpen }) {
         </button>
       </div>
       {menuOpen && (
-        <nav className="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
-          <Link to="/shop#shop" onClick={() => setMenuOpen(false)}>Shop</Link>
-          <Link to="/shop#how-to-order" onClick={() => setMenuOpen(false)}>How to order</Link>
-          <Link to="/shop#contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+        <nav className={`mobile-menu${menuClosing ? " is-closing" : ""}`} id="mobile-menu" aria-label="Mobile navigation">
+          <Link to="/shop#shop" onClick={closeMenu}>Shop</Link>
+          <Link to="/shop#how-to-order" onClick={closeMenu}>How to order</Link>
+          <Link to="/shop#contact" onClick={closeMenu}>Contact</Link>
           <div className="mobile-menu-account">
-            <AccountLinks user={user} displayName={displayName} isAdmin={isAdmin} logout={logout} onNavigate={() => setMenuOpen(false)} />
+            <AccountLinks user={user} displayName={displayName} isAdmin={isAdmin} logout={logout} onNavigate={closeMenu} />
           </div>
         </nav>
       )}

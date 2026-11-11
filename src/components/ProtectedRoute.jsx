@@ -20,13 +20,10 @@ function useLoaderVisible(loading) {
 }
 
 export function ProtectedRoute() {
-  const { user, role, loading, roleLoading } = useAuth();
+  const { user, loading, roleLoading } = useAuth();
   const isLoading = loading || (Boolean(user) && roleLoading);
   const loaderVisible = useLoaderVisible(isLoading);
   if (!loading && !user) return <Navigate to="/login" replace />;
-  if (!isLoading && !user.emailVerified && role !== "admin") {
-    return <Navigate to="/verify-email" replace />;
-  }
   return (
     <>
       {!isLoading && <Outlet />}

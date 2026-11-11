@@ -25,7 +25,8 @@ service cloud.firestore {
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
         && request.resource.data.role == "customer"
-        && request.resource.data.keys().hasOnly(["uid", "name", "email", "phone", "role", "createdAt"]);
+        && request.resource.data.emailVerified == true
+        && request.resource.data.keys().hasOnly(["uid", "name", "email", "phone", "role", "emailVerified", "createdAt"]);
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.role == resource.data.role

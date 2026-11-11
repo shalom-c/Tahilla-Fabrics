@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminRoute, ProtectedRoute } from "./components/ProtectedRoute.jsx";
+import Loader from "./components/Loader.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import WelcomePage from "./pages/WelcomePage.jsx";
 
@@ -12,22 +13,21 @@ const LoginPage = lazy(() =>
 const SignupPage = lazy(() =>
   import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.SignupPage })),
 );
-const VerifyEmailPage = lazy(() =>
-  import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.VerifyEmailPage })),
-);
 const AdminLoginPage = lazy(() =>
   import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.AdminLoginPage })),
 );
 
-export default function App() {
+function AppRoutes() {
+  const location = useLocation();
+
   return (
-    <BrowserRouter>
-      <Suspense fallback={null}>
-        <Routes>
+    <div className="route-transition" key={location.pathname}>
+      <Suspense fallback={<div className="route-loading"><Loader size="sm" /></div>}>
+        <Routes location={location}>
           <Route path="/" element={<WelcomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/verify-email" element={<Navigate to="/shop" replace />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route element={<ProtectedRoute />}>
@@ -38,6 +38,14 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

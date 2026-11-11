@@ -1,5 +1,5 @@
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { WHATSAPP_NUMBER } from "../data/config.js";
 import { useCart } from "../context/CartContext.jsx";
@@ -13,15 +13,35 @@ export default function CartDrawer({ isOpen, onClose }) {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [deliveryArea, setDeliveryArea] = useState("");
+  const [isClosing, setIsClosing] = useState(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const close = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+  }, [isClosing]);
 
   useEffect(() => {
     if (user) setName(user.displayName || "");
   }, [user]);
 
   useEffect(() => {
+    if (!isClosing) return undefined;
+    const timeout = window.setTimeout(() => {
+      onCloseRef.current();
+    }, 200);
+    return () => window.clearTimeout(timeout);
+  }, [isClosing]);
+
+  useEffect(() => {
+    if (!isOpen) setIsClosing(false);
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen) return undefined;
     function handleKeyDown(event) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") close();
     }
     document.addEventListener("keydown", handleKeyDown);
     document.body.classList.add("drawer-open");
@@ -29,20 +49,15 @@ export default function CartDrawer({ isOpen, onClose }) {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.classList.remove("drawer-open");
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, close]);
 
   if (!isOpen) return null;
 
   function sendOrder(event) {
     event.preventDefault();
     if (!user) {
-      onClose();
+      close();
       navigate("/login");
-      return;
-    }
-    if (!user.emailVerified) {
-      onClose();
-      navigate("/verify-email");
       return;
     }
     const lines = items.map(
@@ -66,21 +81,21 @@ export default function CartDrawer({ isOpen, onClose }) {
   }
 
   return (
-    <div className="drawer-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <aside className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+    <div className={`drawer-overlay${isClosing ? " is-closing" : ""}`} onMouseDown={(event) => event.target === event.currentTarget && close()}>
+      <aside className={`cart-drawer${isClosing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-labelledby="cart-title">
         <div className="drawer-header">
           <div>
             <span className="eyebrow">Your selection</span>
             <h2 id="cart-title">Shopping cart</h2>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close shopping cart"><X /></button>
+          <button className="icon-button" onClick={close} aria-label="Close shopping cart"><X /></button>
         </div>
         {items.length === 0 ? (
           <div className="empty-cart">
             <span className="empty-cart-icon"><ShoppingBag size={25} /></span>
             <h3>Your cart is waiting</h3>
             <p>Add a fabric you love and it will appear here.</p>
-            <button className="button button-primary" onClick={onClose}>Explore fabrics</button>
+            <button className="button button-primary" onClick={close}>Explore fabrics</button>
           </div>
         ) : (
           <>
@@ -104,7 +119,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                 </article>
               ))}
             </div>
-            {user?.emailVerified ? (
+            {user ? (
               <form className="order-form" onSubmit={sendOrder}>
                 <label>
                   Your name
@@ -120,15 +135,11 @@ export default function CartDrawer({ isOpen, onClose }) {
               </form>
             ) : (
               <div className="checkout-access">
-                <p>{user ? "Please verify your email before checking out." : "Please sign in or create an account to check out."}</p>
-                {user ? (
-                  <Link className="button button-primary checkout-button" to="/verify-email" onClick={onClose}>Verify email</Link>
-                ) : (
-                  <div className="checkout-access-actions">
-                    <Link className="button button-primary" to="/login" onClick={onClose}>Log in</Link>
-                    <Link className="button button-secondary" to="/signup" onClick={onClose}>Create account</Link>
-                  </div>
-                )}
+                <p>Please sign in or create an account to check out.</p>
+                <div className="checkout-access-actions">
+                  <Link className="button button-primary" to="/login" onClick={close}>Log in</Link>
+                  <Link className="button button-secondary" to="/signup" onClick={close}>Create account</Link>
+                </div>
               </div>
             )}
           </>

@@ -1,6 +1,6 @@
 import { collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getFirebaseFirestore, getFirebaseStorage, isFirebaseConfigured } from "../firebase.js";
 import { sampleProducts } from "../data/sampleProducts.js";
 import formatPrice from "../utils/formatPrice.js";
@@ -8,12 +8,10 @@ import Header from "../components/Header.jsx";
 import CartDrawer from "../components/CartDrawer.jsx";
 import FabricImage from "../components/FabricImage.jsx";
 import NoIndexMeta from "../components/NoIndexMeta.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
 
 const emptyFabric = { name: "", category: "", price: "", unit: "", tag: "", image: "", inStock: true };
 
 export default function AdminPage() {
-  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsLoadError, setProductsLoadError] = useState(false);
@@ -22,13 +20,30 @@ export default function AdminPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [editing, setEditing] = useState(null);
+  const [isEditorClosing, setIsEditorClosing] = useState(false);
   const [form, setForm] = useState(emptyFabric);
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [noticeClosing, setNoticeClosing] = useState(false);
+  const noticeTimers = useRef({ duration: null, exit: null });
   const [quickPrice, setQuickPrice] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => () => {
+    window.clearTimeout(noticeTimers.current.duration);
+    window.clearTimeout(noticeTimers.current.exit);
+  }, []);
+
+  useEffect(() => {
+    if (!isEditorClosing) return undefined;
+    const timeout = window.setTimeout(() => {
+      setEditing(null);
+      setIsEditorClosing(false);
+    }, 180);
+    return () => window.clearTimeout(timeout);
+  }, [isEditorClosing]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
@@ -119,15 +134,29 @@ export default function AdminPage() {
   }), [products, category, query]);
 
   function showNotice(type, text) {
+    window.clearTimeout(noticeTimers.current.duration);
+    window.clearTimeout(noticeTimers.current.exit);
+    setNoticeClosing(false);
     setNotice({ type, text });
-    window.setTimeout(() => setNotice(null), 4200);
+    noticeTimers.current.duration = window.setTimeout(() => {
+      setNoticeClosing(true);
+      noticeTimers.current.exit = window.setTimeout(() => {
+        setNotice(null);
+        setNoticeClosing(false);
+      }, 180);
+    }, 4020);
   }
 
   function openEditor(product = null) {
+    setIsEditorClosing(false);
     setEditing(product || { id: null });
     setForm(product ? { ...emptyFabric, ...product, price: String(product.price ?? "") } : emptyFabric);
     setPhoto(null);
     setPreview(product?.image || "");
+  }
+
+  function closeEditor() {
+    setIsEditorClosing(true);
   }
 
   function updateForm(event) {
@@ -188,7 +217,7 @@ export default function AdminPage() {
       };
       if (editing?.id) await updateDoc(target, data);
       else await setDoc(target, { ...data, createdAt: new Date().toISOString() });
-      setEditing(null);
+      closeEditor();
       showNotice("success", editing?.id ? "Fabric updated successfully." : "Fabric added successfully.");
     } catch (error) {
       console.error("Could not save fabric.", error);
@@ -272,10 +301,7 @@ export default function AdminPage() {
         <div><span className="eyebrow"><span className="eyebrow-line" /> Store management</span><h1>Admin dashboard</h1></div>
         <button className="button button-primary" onClick={() => openEditor()}><Plus size={17} /> Add new fabric</button>
       </div>
-      {user && !user.emailVerified && (
-        <p className="admin-verification-reminder" role="status">A reminder: please verify your email to help keep your account secure.</p>
-      )}
-      {notice && <p className={`admin-toast ${notice.type}`} role="status">{notice.text}</p>}
+      {notice && <p className={`admin-toast ${notice.type}${noticeClosing ? " is-closing" : ""}`} role="status">{notice.text}</p>}
       <div className="admin-tabs" role="tablist" aria-label="Dashboard sections">
         <button role="tab" aria-selected={tab === "fabrics"} className={tab === "fabrics" ? "active" : ""} onClick={() => setTab("fabrics")}>Fabrics ({products.length})</button>
         <button role="tab" aria-selected={tab === "customers"} className={tab === "customers" ? "active" : ""} onClick={() => setTab("customers")}>Customers</button>
@@ -336,9 +362,9 @@ export default function AdminPage() {
         </div>
       )}
       {editing !== null && (
-        <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setEditing(null)}>
-          <section className="fabric-modal" role="dialog" aria-modal="true" aria-labelledby="fabric-modal-title">
-            <div className="modal-heading"><h2 id="fabric-modal-title">{editing?.id ? "Edit fabric" : "Add new fabric"}</h2><button className="icon-button" onClick={() => setEditing(null)} aria-label="Close form"><X /></button></div>
+        <div className={`modal-backdrop${isEditorClosing ? " is-closing" : ""}`} onMouseDown={(event) => event.target === event.currentTarget && closeEditor()}>
+          <section className={`fabric-modal${isEditorClosing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-labelledby="fabric-modal-title">
+            <div className="modal-heading"><h2 id="fabric-modal-title">{editing?.id ? "Edit fabric" : "Add new fabric"}</h2><button className="icon-button" onClick={closeEditor} aria-label="Close form"><X /></button></div>
             <form className="fabric-form" onSubmit={saveFabric}>
               <label>Fabric name<input name="name" value={form.name} onChange={updateForm} required /></label>
               <label>Category<input name="category" value={form.category} onChange={updateForm} required /></label>
@@ -350,7 +376,7 @@ export default function AdminPage() {
               </label>
               {preview && <FabricImage className="image-preview" src={preview} alt="Selected fabric preview" width={640} height={480} />}
               <label className="checkbox-label"><input name="inStock" type="checkbox" checked={Boolean(form.inStock)} onChange={(event) => setForm((current) => ({ ...current, inStock: event.target.checked }))} /> In stock</label>
-              <div className="modal-actions"><button type="button" className="button button-secondary" onClick={() => setEditing(null)}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? "Saving…" : "Save fabric"}</button></div>
+              <div className="modal-actions"><button type="button" className="button button-secondary" onClick={closeEditor}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? "Saving…" : "Save fabric"}</button></div>
             </form>
           </section>
         </div>
