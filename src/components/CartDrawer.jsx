@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import formatPrice from "../utils/formatPrice.js";
 import FabricImage from "./FabricImage.jsx";
 
-export default function CartDrawer({ isOpen, onClose }) {
+export default function CartDrawer({ isOpen, onClose, glass = false }) {
   const { items, increase, decrease, remove, total } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -81,8 +81,8 @@ export default function CartDrawer({ isOpen, onClose }) {
   }
 
   return (
-    <div className={`drawer-overlay${isClosing ? " is-closing" : ""}`} onMouseDown={(event) => event.target === event.currentTarget && close()}>
-      <aside className={`cart-drawer${isClosing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-labelledby="cart-title">
+    <div className={`drawer-overlay${glass ? " glass-cart-overlay" : ""}${isClosing ? " is-closing" : ""}`} onMouseDown={(event) => event.target === event.currentTarget && close()}>
+      <aside className={`cart-drawer${glass ? " glass-cart-drawer" : ""}${isClosing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-labelledby="cart-title">
         <div className="drawer-header">
           <div>
             <span className="eyebrow">Your selection</span>

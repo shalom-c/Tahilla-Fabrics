@@ -16,6 +16,7 @@ const SignupPage = lazy(() =>
 const AdminLoginPage = lazy(() =>
   import("./pages/AuthPages.jsx").then((pages) => ({ default: pages.AdminLoginPage })),
 );
+const TermsPage = lazy(() => import("./pages/TermsPage.jsx"));
 
 function AppRoutes() {
   const location = useLocation();
@@ -27,6 +28,7 @@ function AppRoutes() {
           <Route path="/" element={<WelcomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="/verify-email" element={<Navigate to="/shop" replace />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/shop" element={<ShopPage />} />

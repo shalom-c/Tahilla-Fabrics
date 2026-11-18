@@ -52,6 +52,8 @@ export function SignupPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [attemptedTerms, setAttemptedTerms] = useState(false);
   const passwordValidation = validatePassword(form.password);
   const phoneValidation = validateNigerianPhone(form.phone);
   const phoneError = phoneTouched && !phoneValidation.valid ? phoneValidation.error : "";
@@ -69,6 +71,10 @@ export function SignupPage() {
 
   async function submit(event) {
     event.preventDefault();
+    if (!agreedToTerms) {
+      setAttemptedTerms(true);
+      return;
+    }
     setPhoneTouched(true);
     if (!phoneValidation.valid) return;
     if (!passwordValidation.valid) {
@@ -141,7 +147,33 @@ export function SignupPage() {
           </span>
         </label>
         {error && <p className="form-status error" role="alert">{error}</p>}
-        <button className="button button-primary auth-submit" disabled={busy}>{busy ? <><Loader size="sm" /> Creating account…</> : "Get Started"}</button>
+        <div className="terms-agreement-wrap">
+          <label className="terms-agreement">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(event) => {
+                setAgreedToTerms(event.target.checked);
+                setAttemptedTerms(false);
+              }}
+              aria-invalid={attemptedTerms && !agreedToTerms}
+              aria-describedby={!agreedToTerms ? "terms-agreement-hint" : undefined}
+            />
+            <span>
+              I have read and agree to the{" "}
+              <Link to="/terms" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</Link>
+              {" "}and How to Order guide
+            </span>
+          </label>
+          {!agreedToTerms && (
+            <p className={`terms-agreement-hint${attemptedTerms ? " is-attempted" : ""}`} id="terms-agreement-hint">
+              Please agree to continue.
+            </p>
+          )}
+        </div>
+        <button className="button button-primary auth-submit" disabled={busy || !agreedToTerms}>
+          {busy ? <><Loader size="sm" /> Creating account…</> : "Get Started"}
+        </button>
       </form>
     </AuthLayout>
   );
